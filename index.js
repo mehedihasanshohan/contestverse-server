@@ -25,8 +25,19 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    const db = client.db('contest_verse_db');
+    const contestsCollection = db.collection('contests');
 
+    // contest api
+    app.get('/contests', async(req, res) => {
+      res.send('hello');
+    })
 
+    app.post('/contests', async(req, res) => {
+      const contest = req.body;
+      const result = await contestsCollection.insertOne(contest);
+      res.send(result)
+    })
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
