@@ -1,9 +1,9 @@
-const express = require('express')
-const cors = require('cors')
-const app = express()
-require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const port = process.env.PORT || 3000
+const express = require("express");
+const cors = require("cors");
+const app = express();
+require("dotenv").config();
+const { MongoClient, ServerApiVersion } = require("mongodb");
+const port = process.env.PORT || 3000;
 
 //middleware
 app.use(express.json());
@@ -17,7 +17,7 @@ const client = new MongoClient(uri, {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  }
+  },
 });
 
 async function run() {
@@ -25,23 +25,48 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-    const db = client.db('contest_verse_db');
-    const contestsCollection = db.collection('contests');
+    const db = client.db("contest_verse_db");
+    const contestsCollection = db.collection("contests");
 
     // contest api
-    app.get('/contests', async(req, res) => {
-      res.send('hello');
-    })
+    // Get all contests
+    app.get("/contests", async (req, res) => {
+      try {
+        const contests = await contestsCollection.find().toArray();
+        res.send(contests);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to fetch contests", error });
+      }
+    });
 
-    app.post('/contests', async(req, res) => {
+    // Popular contests (top 5 by participants)
+    app.get("/contests/popular", async (req, res) => {
+      try {
+        const popular = await contestsCollection
+          .find()
+          .sort({ participants: -1 })
+          .limit(5)
+          .toArray();
+
+        res.send(popular);
+      } catch (error) {
+        res
+          .status(500)
+          .send({ message: "Failed to fetch popular contests", error });
+      }
+    });
+
+    app.post("/contests", async (req, res) => {
       const contest = req.body;
       const result = await contestsCollection.insertOne(contest);
-      res.send(result)
-    })
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -49,12 +74,10 @@ async function run() {
 }
 run().catch(console.dir);
 
-
-
-app.get('/', (req, res) => {
-  res.send('contestverse is contesting!!')
-})
+app.get("/", (req, res) => {
+  res.send("contestverse is contesting!!");
+});
 
 app.listen(port, () => {
-  console.log(`contestverse is contesting on port ${port}`)
-})
+  console.log(`contestverse is contesting on port ${port}`);
+});
