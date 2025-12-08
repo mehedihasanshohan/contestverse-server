@@ -56,6 +56,21 @@ async function run() {
       }
     });
 
+    // Contest details by ID
+    app.get("/contests/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+
+      try {
+        const contest = await contestsCollection.findOne(query);
+        res.send(contest);
+      } catch (error) {
+        res
+          .status(500)
+          .send({ message: "Failed to fetch contest details", error });
+      }
+    });
+
     app.post("/contests", async (req, res) => {
       const contest = req.body;
       const result = await contestsCollection.insertOne(contest);
