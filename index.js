@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 3000;
 
 //middleware
@@ -32,8 +32,15 @@ async function run() {
     // Get all contests
     app.get("/contests", async (req, res) => {
       try {
-        const contests = await contestsCollection.find().toArray();
-        res.send(contests);
+        const query = {}
+        const {email} = req.query;
+        if(email){
+          query.creatorEmail = email;
+        }
+
+        const contests = await contestsCollection.find(query);
+        const result = await contests.toArray();
+        res.send(result);
       } catch (error) {
         res.status(500).send({ message: "Failed to fetch contests", error });
       }
@@ -57,7 +64,7 @@ async function run() {
     });
 
     // Contest details by ID
-    app.get("/contests/:id", async (req, res) => {
+    app.get("/contest-details/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
 
@@ -70,6 +77,13 @@ async function run() {
           .send({ message: "Failed to fetch contest details", error });
       }
     });
+
+    app.delete('/contests/:id', async(req, res) => {
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await contestsCollection.deleteOne(query);
+      res.send(result);
+    })
 
     app.post("/contests", async (req, res) => {
       const contest = req.body;
