@@ -6,6 +6,15 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 3000;
 
+// utils/generateTrackingId.js
+const crypto = require("crypto");
+function generateTrackingId (){
+  const prefix = "PRCL";
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const rand = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `${prefix}-${date}-${rand}`;
+};
+
 //middleware
 app.use(express.json());
 app.use(cors());
@@ -100,6 +109,7 @@ async function run() {
       res.send(result);
     });
 
+
      // PAYENT related api
     app.post("/create-checkout-session", async (req, res) => {
       const paymentInfo = req.body;
@@ -131,6 +141,27 @@ async function run() {
       });
       res.send({url: session.url})
     });
+
+
+
+    app.patch('/payment-success', async(req, res)=>{
+      const sessionId = req.query.session_id;
+      const session = await stripe.checkout.sessions.retrieve(sessionId);
+      console.log(session);
+
+      if(session.payment_status === 'paid'){
+        const id = session.metadata.contestId;
+        // const name = session.metadata.contestName;
+        const query = { _id: new ObjectId(id)}
+        const update = {
+          $set: {
+            paymentStatus: 'paid'
+          }
+        }
+        const result = await contestsCollection.updateOne(query, update);
+        res.send(result);
+      }
+    })
 
 
     // Send a ping to confirm a successful connection
