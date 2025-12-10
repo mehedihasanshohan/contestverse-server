@@ -7,9 +7,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 3000;
 
 const admin = require("firebase-admin");
-
-const serviceAccount = require("path/to/serviceAccountKey.json");
-
+const serviceAccount = require("./contestverse-firebase-adminsdk-fbsvc.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -29,14 +27,13 @@ app.use(express.json());
 app.use(cors());
 
 const verifyToken = async (req, res, next) => {
-  console.log(req.headers?.authorization)
   const token = req.headers.authorization;
 
-  if(!token) {
+   if(!token) {
     return res.status(401).send({message: 'unauthorized'})
   }
 
-  try{
+   try{
     const idToken = token.split(' ')[1];
     const decoded = await admin.auth().verifyIdToken(idToken);
     console.log('decoded in the token', decoded);
@@ -44,8 +41,9 @@ const verifyToken = async (req, res, next) => {
     next();
   }
   catch(err){
-    return res.status(401).send({message: 'unauthorized access'})
+    return res.status(403).send({message: 'invalid token'})
   }
+
 }
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.buxufwj.mongodb.net/?appName=Cluster0`;
@@ -65,8 +63,19 @@ async function run() {
     await client.connect();
 
     const db = client.db("contest_verse_db");
+    const usersCollection = db.collection('users');
     const contestsCollection = db.collection("contests");
     const paymentCollection = db.collection('payments')
+
+    // user related api
+    app.post('/users', async(req, res) => {
+      const user = req.body;
+      user.role = 'user';
+      user.createdAt = new Date();
+      const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
+
 
     // contest api
     // Get all contests
@@ -228,13 +237,18 @@ async function run() {
     })
 
     // payment related api
-    app.get('/payments', async(req, res)=> {
+    app.get('/payments', verifyToken,  async(req, res)=> {
       const email = req.query.email;
       const query = {}
 
+      // console.log(req.headers);
 
       if(email){
-        query.customerEmail = email
+        query.customerEmail = email;
+
+        if(email !== req.decoded_email){
+          return res.status(403).send({message: 'forbidden access'})
+        }
       }
       const cursor = paymentCollection.find(query);
       const result = await cursor.toArray();
