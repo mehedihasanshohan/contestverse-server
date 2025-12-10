@@ -6,6 +6,15 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 3000;
 
+const admin = require("firebase-admin");
+
+const serviceAccount = require("path/to/serviceAccountKey.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+
 // utils/generateTrackingId.js
 const crypto = require("crypto");
 function generateTrackingId (){
@@ -18,6 +27,26 @@ function generateTrackingId (){
 //middleware
 app.use(express.json());
 app.use(cors());
+
+const verifyToken = async (req, res, next) => {
+  console.log(req.headers?.authorization)
+  const token = req.headers.authorization;
+
+  if(!token) {
+    return res.status(401).send({message: 'unauthorized'})
+  }
+
+  try{
+    const idToken = token.split(' ')[1];
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    console.log('decoded in the token', decoded);
+    req.decoded_email = decoded.email;
+    next();
+  }
+  catch(err){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.buxufwj.mongodb.net/?appName=Cluster0`;
 
@@ -143,8 +172,6 @@ async function run() {
       res.send({url: session.url})
     });
 
-
-
     app.patch('/payment-success', async(req, res)=>{
       const sessionId = req.query.session_id;
       const session = await stripe.checkout.sessions.retrieve(sessionId);
@@ -198,6 +225,20 @@ async function run() {
         }
       }
       res.send({ success: false});
+    })
+
+    // payment related api
+    app.get('/payments', async(req, res)=> {
+      const email = req.query.email;
+      const query = {}
+
+
+      if(email){
+        query.customerEmail = email
+      }
+      const cursor = paymentCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
     })
 
 
