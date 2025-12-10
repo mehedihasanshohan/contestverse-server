@@ -37,6 +37,7 @@ async function run() {
 
     const db = client.db("contest_verse_db");
     const contestsCollection = db.collection("contests");
+    const paymentCollection = db.collection('payments')
 
     // contest api
     // Get all contests
@@ -151,16 +152,33 @@ async function run() {
 
       if(session.payment_status === 'paid'){
         const id = session.metadata.contestId;
-        // const name = session.metadata.contestName;
         const query = { _id: new ObjectId(id)}
         const update = {
           $set: {
             paymentStatus: 'paid'
           }
         }
+
         const result = await contestsCollection.updateOne(query, update);
-        res.send(result);
+
+        const payment = {
+          amount: session.amount_total/100,
+          currency: session.currency,
+          customerEmail: session.customer_email,
+          contestId: session.metadata.contestId,
+          contestName: session.metadata.contestName,
+          transactionId: session.payment_intent,
+          paymentStatus: session.payment_status,
+          paitAt: new Date()
+        }
+
+        if(session.payment_status === 'paid'){
+          const resultPayment = paymentCollection.insertOne(payment)
+          res.send({success: true, modifyContest: result,
+            paymentInfo: resultPayment})
+        }
       }
+      res.send({ success: false});
     })
 
 
