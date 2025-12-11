@@ -66,12 +66,19 @@ async function run() {
     const usersCollection = db.collection('users');
     const contestsCollection = db.collection("contests");
     const paymentCollection = db.collection('payments')
+    const creatorsCollection = db.collection('creators')
 
     // user related api
     app.post('/users', async(req, res) => {
       const user = req.body;
       user.role = 'user';
       user.createdAt = new Date();
+      const email = user.email;
+      const userExists = await usersCollection.findOne({email})
+
+      if(userExists){
+        return res.send({message: 'user already exist'})
+      }
       const result = await usersCollection.insertOne(user);
       res.send(result);
     })
@@ -252,6 +259,25 @@ async function run() {
       }
       const cursor = paymentCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // creator related api
+    app.get('/creators', async(req, res) => {
+      const query={}
+      if(req.query.status){
+        query.status = req.query.status;
+      }
+      const cursor = creatorsCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    app.post('/creators', async(req, res) => {
+      const creator = req.body;
+      creator.status = 'pending';
+      creator.createdAt = new Date();
+      const result = await creatorsCollection.insertOne(creator);
       res.send(result);
     })
 
