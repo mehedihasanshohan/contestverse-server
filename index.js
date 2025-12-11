@@ -227,7 +227,7 @@ async function run() {
           contestName: session.metadata.contestName,
           transactionId: session.payment_intent,
           paymentStatus: session.payment_status,
-          paitAt: new Date(),
+          paidAt: new Date(),
           trackingId: trackingId
         }
 
@@ -278,6 +278,32 @@ async function run() {
       creator.status = 'pending';
       creator.createdAt = new Date();
       const result = await creatorsCollection.insertOne(creator);
+      res.send(result);
+    })
+
+    app.patch('/creators/:id', verifyToken, async(req, res) => {
+      const status = req.body.status;
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          status: status
+        }
+      }
+      const result = await creatorsCollection.updateOne(query, updatedDoc);
+
+      // set role
+      if(status === 'approved'){
+        const email = req.body.email;
+        const userQuery = {email};
+        const updateUser = {
+          $set: {
+            role: 'creator'
+          }
+        }
+        const creatorResult = await usersCollection.updateOne(userQuery, updateUser)
+      }
+
       res.send(result);
     })
 
