@@ -7,7 +7,7 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 3000;
 
 const admin = require("firebase-admin");
-const serviceAccount = require("./contestverse-firebase-adminsdk-fbsvc.json");
+const serviceAccount = require("./contestverse-e1972-firebase-adminsdk-fbsvc-a2b0dc62b9.json");
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -80,6 +80,26 @@ async function run() {
         return res.send({message: 'user already exist'})
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    })
+
+    app.get('/users', verifyToken, async (req, res) => {
+      // const query = {}
+      const cursor =  usersCollection.find();
+      const result = await cursor.toArray();
+      res.send(result)
+    })
+
+    app.patch('/users/:id', async(req, res) => {
+      const id = req.params.id;
+      const roleInfo = req.body;
+      const query = { _id: new ObjectId(id)}
+      const updatedDoc = {
+        $set: {
+          role: roleInfo.role
+        }
+      }
+      const result = await usersCollection.updateOne(query, updatedDoc)
       res.send(result);
     })
 
