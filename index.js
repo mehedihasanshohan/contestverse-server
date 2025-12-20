@@ -731,7 +731,24 @@ async function run() {
       res.send(result);
     });
 
-
+    // static api
+    app.get("/user-stats/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded_email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const participatedCount = await paymentCollection.countDocuments({
+        userEmail: email,
+      });
+      const wonCount = await submissionsCollection.countDocuments({
+        userEmail: email,
+        status: "winner",
+      });
+      res.send({
+        participatedCount,
+        wonCount,
+      });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
