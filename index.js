@@ -459,7 +459,6 @@ async function run() {
 
         const transactionId = session.payment_intent;
 
-        // ১. প্রথমেই চেক করুন এই ট্রানজেকশন আইডি দিয়ে পেমেন্ট অলরেডি সেভ হয়েছে কিনা
         const paymentExist = await paymentCollection.findOne({ transactionId });
         if (paymentExist) {
           return res.send({
@@ -484,10 +483,8 @@ async function run() {
             trackingId: trackingId,
           };
 
-          // ২. পেমেন্ট ইনসার্ট করা
           const resultPayment = await paymentCollection.insertOne(payment);
 
-          // ৩. পার্টিসিপেন্ট সংখ্যা ১ বাড়ানো (শুধুমাত্র একবার)
           await contestsCollection.updateOne(
             { _id: new ObjectId(session.metadata.contestId) },
             { $inc: { participants: 1 } }
@@ -721,6 +718,20 @@ async function run() {
         }
       }
     );
+
+    // 1. My Winning Contests (For User Dashboard)
+    app.get("/submissions/my-wins/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      const result = await submissionsCollection
+        .find({
+          userEmail: email,
+          status: "winner",
+        })
+        .toArray();
+      res.send(result);
+    });
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
