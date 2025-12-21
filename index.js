@@ -750,6 +750,26 @@ async function run() {
       });
     });
 
+    // leaderboard
+    app.get("/leaderboard", async (req, res) => {
+      const result = await submissionsCollection
+        .aggregate([
+          { $match: { status: "winner" } }, 
+          {
+            $group: {
+              _id: "$userEmail",
+              totalWins: { $sum: 1 },
+              userName: { $first: "$userName" },
+              userImage: { $first: "$userImage" },
+            },
+          },
+          { $sort: { totalWins: -1 } },
+          { $limit: 10 },
+        ])
+        .toArray();
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
