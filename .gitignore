@@ -1,3 +1,4 @@
 node_modules
 .env
 contestverse-e1972-firebase-adminsdk-fbsvc-a2b0dc62b9.json
+.vercel
