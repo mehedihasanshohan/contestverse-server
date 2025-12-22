@@ -1,18 +1,10 @@
-
----
-
-## **Server-side README.md (Node.js/Express + MongoDB)**
-
-```markdown
 # ContestHub - Backend (Server)
 
-Live API URL: [ https://contestverse-shohan.netlify.app](#)
+Live API URL: [https://contestverse-shohan.netlify.app](#)
 
 Backend for ContestHub is built with **Node.js**, **Express**, and **MongoDB**. It handles authentication, contest management, payments, role-based access, and all API endpoints required for the frontend.
 
----
-
-## **Features**
+## Features
 
 1. JWT-based authentication & secure private routes
 2. Role management: Admin, Contest Creator, Normal User
@@ -28,9 +20,7 @@ Backend for ContestHub is built with **Node.js**, **Express**, and **MongoDB**. 
 12. Extra API routes for custom pages
 13. Fully deployed on Vercel or any cloud hosting
 
----
-
-## **Tech Stack**
+## Tech Stack
 
 - **Node.js** + **Express** (Backend)
 - **MongoDB** + **Mongoose** (Database)
@@ -39,9 +29,7 @@ Backend for ContestHub is built with **Node.js**, **Express**, and **MongoDB**. 
 - **Cors & Express Middleware** (Security & Parsing)
 - **Vercel** (Deployment)
 
----
-
-## **API Endpoints**
+## API Endpoints
 
 - `POST /auth/login` – Login
 - `POST /auth/register` – Register
@@ -55,4 +43,9 @@ Backend for ContestHub is built with **Node.js**, **Express**, and **MongoDB**. 
 - `GET /users` – Admin: get all users
 - `PATCH /users/:id/role` – Admin: change user role
 
----
+## Setup & Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/mehedihasanshohan/contestverse-server.git
